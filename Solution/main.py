@@ -1,36 +1,35 @@
+import tensorflow as tf
+from tensorflow import keras
+from keras.layers import Dense
+from keras.models import Sequential, load_model
 import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
+
+data = pd.read_csv('../Data/GermanCreditDataset/germanC.csv', delimiter=';' )
+
+print(data.shape)  # This will print (number_of_rows, number_of_columns)
+print(data.head())
+
+X = data.drop('Creditability', axis=1)  # Features
+y = data['Creditability']               # Labels
+
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-from sklearn.linear_model import LogisticRegression
-import joblib
 
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
 
-# 1.Importing Dataset
-dataset = pd.read_excel('../Data/e_NewApplications_CreditScore_Needed.xlsx')
+from sklearn.model_selection import train_test_split
 
-# shows count of rows and columns
-print(dataset.shape)
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=42)  # 0.25 x 0.8 = 0.2
+#Building the NN
+model = Sequential([
+    Dense(64, activation='relu', input_shape=(X_train.shape[1], 20)),
+    Dense(32, activation='relu'),
+    Dense(1, activation='sigmoid')
+])
 
-# shows first few rows of the code
-print(dataset.head())
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+history = model.fit(X_train, y_train, epochs=10, validation_data=(X_val, y_val))
 
-#dropping customer ID column from the dataset
-dataset=dataset.drop('ID',axis=1)
-
-# shows count of rows and columns
-print(dataset.shape)
-
-# explore missing values
-dataset.isna().sum()
-
-# filling missing values with mean
-dataset=dataset.fillna(dataset.mean())
-
-# 2.Train Test Split
-X_fresh = dataset
-
-# Loading normalisation coefficients - exported from the model code file as f2_Normalisation 
-sc = joblib.load('../Data/f2_Normalisation_CreditScoring')
-X_fresh = sc.transform(X_fresh)
+test_loss, test_accuracy = model.evaluate(X_test, y_test)
+print('Test accuracy:', test_accuracy)
