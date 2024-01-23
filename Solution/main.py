@@ -33,3 +33,16 @@ history = model.fit(X_train, y_train, epochs=10, validation_data=(X_val, y_val))
 
 test_loss, test_accuracy = model.evaluate(X_test, y_test)
 print('Test accuracy:', test_accuracy)
+
+#model.save('../Models/CreditRiskAssesmentModel.h5')  # Creates a HDF5 file 'CreditRiskAssesmentModel.h5'
+
+# Load the new test data
+new_test_data = pd.read_csv('../Data/new_test_data.csv')
+new_data_scaled = scaler.transform(new_test_data)
+predictions = model.predict(new_data_scaled)
+
+# Set a threshold (commonly 0.5) to interpret the probabilities
+class_predictions = (predictions > 0.5).astype(int)
+
+# View the predictions
+print(class_predictions)
